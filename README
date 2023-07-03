@@ -1,0 +1,144 @@
+README Tema 4 PCOM
+---------------------------------------------------------
+Copyright Raducanu George Cristian 321CAb
+----------------------------------------------------------
+Materiale folosite: 
+* Laboratorul 9 PCOM
+* PDF-ul temei + Postman
+* Nlohmann de pe github impreuna cu documentatia
+---------------------------------------------------------
+!!! Ca schelet pentru implementarea temei 4 am utilizat
+ laboratorul 9. Acesta continea (am completat la lab) 
+ functiile de get si post, pentru tema a fost necesar doar 
+ sa implementez si functia de delete care dupa o analiza cu 
+ Postman am facut-o luand identic functia de get si inlocuind 
+ cuvantul Get cu DELETE. !!!
+
+ ------------------------------------------------------------
+
+ De asemenea si fisierul de baza (client.cpp) a avut ca sursa 
+ de pornire laboratorul 9. Laboratorul a fost in C, insa pentru 
+ a utiliza cu usurinta parsare de JSON-uri(de ales intre Parson) 
+ si Nlohmann, am ales varianta C++ - Nlohmann intrucat am 
+ considerat ca implementarea pe baza de OOP este mai usor de folosit,
+ dar si de inteles.
+
+ --------------------------------------------------------------
+
+ Explicarea modului de interactiune cu programul
+
+ Dupa tastarea make in terminal se obtine un executabil cu numele de 
+ client. Dupa rularea acestuia se pot tasta comenzile cerute in continuare.
+
+ Acestea respecta cerinta si sunt:
+
+ *register, in continuare user ul isi va introduce numele dorit cat si parola,
+ iar acestuia i se va raspunde atat in caz de succes cat si in cazul 
+ in care contul deja exista(respectiv un user cu acelasi nume).
+
+ *login, se va cere la tatstatura numele si parola, si se vor intoarce 
+ mesaje corespunzatoare, in cazul in care credidentialele sunt gresite, 
+ in cazul in care nu exista cont cu numele oferit, sau in cazul succesului.
+
+ *enter_library - comanda ce desemneaza accesul in biblioteca fara a afisa 
+ nimic la consola, astfel se obtine accesul la biblioteca.
+
+ *get_books - comanda ce dupa ce este introdusa fie va da un mesaj de eroare 
+ referitor la logarea utilizatorului sau a permisiunilor (enter_library) sau 
+ in caz contrar va afisa cu succes toate cartile aflate in biblioteca 
+ curenta a utilizatorului.
+
+ *get_book - va cere introducerea unui id de catre utilizator, daca mesajul introdus 
+ nu este numar se va intoarce un mesaj referitor la acest lucru. Altfel se va 
+ raspunde fie cu mesaje de eroare pt logare/permisiuni, existenta unei carti 
+ cu id ul introdus sau in caz de succes se vor printa mai multe informatii detaliate 
+ despre cartea cu id-ul respectiv.
+
+ *add_book - utilizatorul va introduce date referitoare la o carte ce vrea sa fie 
+ adaugata la biblioteca. Vor fi cerute informatiile, iar apoi corectitudinea acestora 
+ va fi verficata si in cazul datelor gresite, user ul va fi avertizat sa introduca date 
+ in format corespunzator. Daca utilizatorul nu este logat sau nu are 
+ permisiuni se va afisa de asemenea un mesaj de eroare, altfel cartea va fi 
+ adaugata cu succes.
+
+ *delete_book - Se cere id ul cartii ce va fi sterse (se face o verificare a corectitudinii -
+ nr natural). Daca nu exista nici o carte cu acel id, sau daca utilizatorul nu este 
+ logat/nu are permisiuni se vor afisa mesaje corespunzatoare.
+
+ *logout - Utilizatorul curent va fi delogat complet (In cazul in care nimeni nu era logat
+ pt a putea fi delogat se va afisa un mesaj de eroare corespunzator)
+
+ *exit - Programul se va inchide(in mod politicos), fara memory leaks-uri ;)
+
+ --------------------------------------------------------------------------------------------
+
+ Detalii legate de implementarea explicita (lucrul cu REST API-HTTP)
+
+Pentru interactiunea cu serverul, asa cum este specificat in enuntul temei, se utilizeaza 
+cereri de tip POST, GET si DELETE. Partile de POST si GET au fost implementate in timpul 
+laboratorului, iar DELETE-ul l-am realizat modificand putin functia de GET.
+
+Pentru a reduce warning-urile C++ am alocat la compile time mai multe char* ce vor fi pasate
+functiilor mai departe. Am mai rezervat spatiu pentru bufferele ce vor fi folosite.
+
+In interiorul unui while controlat printr-o variabila am realizat citirea comenzilor si executia acestora,
+ce vor fi detaliate in continuare.
+
+*exit - comanda exit va printa un mesaj pentru a anunta ca a fost apelata, variabila de control 
+va fi facuta zero, iar ca urmare (din cauza else-urilor) fluxul programului se va incheia imediat.
+
+*register - cere anumite date de la utilizator printand mesaje, si apoi in buffere separate le 
+citeste pe fiecare separat. Se pun informatiile obtinute (username si parola) intr-un obiect de tip
+ json (pentru formatare ulterioara). Se trimite un mesaj de tip post catre
+  /api/v1/tema/auth/register cu payloadul acel json converitit in string.
+   Se verifica cu ajutorul strstr daca mesajul intors este unul de eroare si se anunta acest lucru. 
+   In caz ca operatia a fost realizata cu succes se anunta si acest lucru.
+
+*login - asemanator cu register se trimite o cerere de tip post si se verifica toate cazurile posibile
+ atat pentru esesc cat si cea pentru succes. Se memoreaza cookie ul intors.
+
+*enter_library - aceasta comanda este o comanda de get catre "/api/v1/tema/library/access"
+ in care trimit si cookie ul obtinut anterior pentru a imi 
+ demonstra identitatea. De asemenea, in raspuns se va primi un 
+ token JWT ce reprezinta dovada ca am acces in biblioteca (si va fi utilizat 
+ in cerintele urmatoare)
+
+ *get_books - reprezinta in spate o comanda de tip get cu un singur cookie (cel 
+ obtinut anterior) si de asemenea si token ul jwt obtinut anterior
+ Se verifica de asemenea cazul daca a fost realizat cu succes acest get
+ De asemenea daca nr de carti ce se afla in biblioteca este 0 se anunta acest lucru
+
+ *get_book - este tot o comanda de get la baza, in urma comenzii catre 
+ "/api/v1/tema/library/books/:xyxt" , unde xyzt id ul unei carti se 
+ va obtine in raspuns un json cu mai multe informatii despre cartea respectiva.
+  Toate situatiile au fost luate in calcul, inclusiv 
+ introducerea unui id ce nu e numar natural sau al unui id ce nu 
+ corespunde niciunei carti(am verificat cu strstr in raspuntul de la
+ server)
+
+ *add_book - mai intai se cer datele corespunzatoare cartii ce va fi 
+ adaugate, verificandu-se validitatea lor, si in caz afirmativ se 
+ introduc intr-un json. Se realizeaza o cerere de tip post.  Se 
+ verifica raspunsul serverului si se arata mesaj corespunzator cu 
+ ceea ce s-a intamplat.
+
+ *delete_book - se obtine id-ul unei carti, verificandu-se ca este in formatul corespunzator.
+  Se trimite o cerere de delete (singura 
+ din tot programul), iar rezultatul returnat se prelucreaza.
+
+ *logout - reprezinta tot o cerere de tip get, de data asta catre 
+ "/api/v1/tema/auth/logout", si de asemenea in functie de 
+ continutul raspunsului intors se va informa user ul in mod corespunzator
+
+ *alta comanda - daca comanda nu este din setul prezentat se va informa userul ca 
+ comanda sa nu este valida.
+
+ -------------------------------------------------------------------------------------
+ Mentiuni:
+ *Am ales sa aleg abordarea cu inchisul si deschisul conexiunii, fiind cea mai simpla
+ si usor de inteles. Este de asemenea eficienta intrucat se trimit doar mesajele 
+ strict necesare.
+ *Punct de plecare pentru aceasta tema a fost laboratorul 9. Am adaugat functia de 
+ compute_delete_request pentru comanda de delete_book. Restul comenzilor folosesc 
+ cereri de tip post si get cu cookie si token jwt.
+ 
